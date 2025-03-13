@@ -3,8 +3,8 @@ import os
 #import argparse
 
 # args:
-# -m to decrease mem speed
 # file name/path
+# -m to decrease mem speed
 # -d to change DQS and DRV slew trims
 
 mem_speed_patch = False
@@ -14,7 +14,6 @@ slew_trims_patch = False
 if "-d" in sys.argv:
     slew_trims_patch = True
 
-file_name = "x3.3294.bin" #TODO
 file_name = sys.argv[1]
 
 ####### read file
@@ -26,11 +25,9 @@ with open(file_name, "rb") as infile:
 
 ####### patcher
 
-#Possible approaches:
-#xcode parser to follow all paths through the codes (see if X3 REALLY needs this)
-#lazy finder for the last xcode. Make sure it's aligned
+#This is a lazy approach to search for the last xcode which is the same in all BIOSes
 
-#Need to account for when there is something in the nearby space (see some Cerb versions which need the slew table moving)
+#TODO account for when there is something in the nearby space (see some Cerb versions which need the slew table moving)
 
 def xcode_index_to_file_index(n):
     return 0x80 + n * 9
@@ -58,6 +55,41 @@ patch256 = bytes([
 if patch256 in file_contents:
     print("Already patched for 256MB!")
     exit(1)
+
+#Handle slews table first because it can be directly after xcodes, meaning we don't have enough space
+slews_header = b" NN>VC]JdPjU"
+if slew_trims_patch:
+    if slews_header not in file_contents:
+        print("Could not find slew trim array to patch! Remove -d option or try a different BIOS")
+        exit(1)
+    
+    location = file_contents.find(slews_header) + 12 #+12 to skip header
+    print("Slew trims patch: slew table found at 0x%X" % location)
+    for i in range(15):
+        #19 bytes per slew table entry
+        file_contents[location + i * 19 + 12] = 0x0E #Low DQS slew trim
+        file_contents[location + i * 19 + 13] = 0x0E #High DQS slew trim
+        file_contents[location + i * 19 + 15] = 0x0E #DQS drive trim
+
+#Move slews table if it's in our way
+if slews_header in file_contents:
+    location = file_contents.find(slews_header)
+    #If last xcode plus patch is at a higher address than the slews table
+    if (xcode_index_to_file_index(end_xcode_index + 1) + len(patch256)) > location:
+        #Check if it's got a pointer in the BIOS header
+        pointer = int.from_bytes(file_contents[0x7C:0x80], "little")
+        if pointer != location:
+            print("Could not move slews table at 0x%X! Pointer in BIOS header is 0x%X" % (location, pointer))
+            exit(1)
+        #Be lazy and move it along by the size of the patch
+        pointer += len(patch256)
+        file_contents[0x7C:0x80] = pointer.to_bytes(4, "little")
+        #Copy and paste table
+        table = file_contents[location:location + 0xD6]
+        file_contents[location:location + 0xD6] = bytes(0xD6) #Zero it
+        file_contents[pointer:pointer + 0xD6] = table
+        print("Moved slews table from 0x%X to 0x%X" % (location, pointer))
+        
 
 print("Patching for 256MB...")
 
@@ -128,20 +160,6 @@ if mem_speed_patch:
                 new_byte = target_byte & 0x0F | 0x30 #Set MEM_PDIV = 3
                 print("Mem speed patch: Byte at 0x%X changed from 0x%X to 0x%X" % (file_index, target_byte, new_byte))
                 file_contents[file_index + 7] = new_byte
-
-if slew_trims_patch:
-    slews_header = b" NN>VC]JdPjU"
-    if slews_header not in file_contents:
-        print("Could not find slew trim array to patch! Remove -d option or try a different BIOS")
-        exit(1)
-    
-    location = file_contents.find(slews_header) + 12 #+12 to skip header
-    print("Slew trims patch: slew table found at 0x%X" % location)
-    for i in range(15):
-        #19 bytes per slew table entry
-        file_contents[location + i * 19 + 12] = 0x0E #Low DQS slew trim
-        file_contents[location + i * 19 + 13] = 0x0E #High DQS slew trim
-        file_contents[location + i * 19 + 15] = 0x0E #DQS drive trim
 
 ####### output file
 
