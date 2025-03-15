@@ -32,7 +32,11 @@ PCB gerbers appropriate for PCBWay are in the github release.
 
 256Mbit_RAM_interposer_v2_flex is my recommended design. It's intended to be manufactured in flexible PCB to be slim, easy to handle, and have enough outline precision to correctly make the castellated holes at the edge of the PCB. You can try ordering it in rigid fibreglass PCB but many manufacturers won't have the required tolerance on the board outline to avoid ripping the castellations apart.
 
+![256Mbit_RAM_interposer_v2_flex](256Mbit_RAM_interposer_v2_flex/photo.jpg)
+
 256Mbit_RAM_interposer_rigidflex is my earlier design where the two inner layers are flexible and extend from the board, becoming pins and mimicing the original TQFP package. **This design suffers from the pins being too weak**: they get micro fractures from bending and therefore lose conductivity. This design would be ideal if the flexible layers could be on the bottom side of the board.
+
+![256Mbit_RAM_interposer_rigidflex](256Mbit_RAM_interposer_rigidflex/photo.jpg)
 
 # Theory
 
