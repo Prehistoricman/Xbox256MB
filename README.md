@@ -2,6 +2,8 @@
 
 Upgrade the original Xbox to quadruple its original RAM size. Why? Because we can. **For advanced modders only!** Understand the risks and drawbacks before attempting.
 
+See [my tutorial on the OGXbox forums](https://www.ogxbox.com/forums/index.php?/topic/19155-256mb-ram-upgrade-release-and-tutorial/) or [Macho Nacho's tutorial on YouTube](https://www.youtube.com/watch?v=R2hvSL30Rlg).
+
 # Xblast OS for RAM testing and flashing
 
 See the [bitbucket downloads](https://bitbucket.org/prehistoricman/lpcmod_os/downloads/) and the [bitbucket readme](https://bitbucket.org/prehistoricman/lpcmod_os/src/master/README.md) for the RAM testing BIOS that lets you check each RAM chip individually.
